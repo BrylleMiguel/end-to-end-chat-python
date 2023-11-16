@@ -39,42 +39,14 @@ def log_message(message, hmac, timestamp):
         log_file.write(f"{timestamp} - Message: {message}, HMAC: {hmac.hex()}\n")
 
 
-def handle_client(conn, key, hmac_key):
-    while True:
-        received_data = conn.recv(1024)
-        received_hmac = received_data[-32:]
-        data_to_verify = received_data[:-32]
-
-        if received_hmac == calculate_hmac(data_to_verify, hmac_key):
-            decrypted_message = decrypt_message(data_to_verify, key)
-            print(f"Client: {decrypted_message}")
-
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log_message(decrypted_message, received_hmac, timestamp)
-
-            if decrypted_message.lower() == "exit":
-                break
-
-            message = input("")
-            encrypted_message = encrypt_message(message, key)
-            hmac = calculate_hmac(encrypted_message, hmac_key)
-            conn.sendall(encrypted_message + hmac)
-
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log_message(message, hmac, timestamp)
-
-            if message.lower() == "exit":
-                break
-        else:
-            print("HMAC verification failed. Message integrity compromised.")
-            break
-
-    conn.close()
+def log_encrypted_message(encrypted_message):
+    with open("encrypted_messages.txt", "a") as encrypted_file:
+        encrypted_file.write(f"{encrypted_message.hex()}\n")
 
 
 def start_server():
     host = "127.0.0.1"
-    port = 12345
+    port = 9999
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
@@ -110,6 +82,7 @@ def server_message_handler(conn, key, hmac_key):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_message(message, hmac, timestamp)
+        log_encrypted_message(encrypted_message)
 
         if message.lower() == "exit":
             break
@@ -137,7 +110,7 @@ def client_message_handler(conn, key, hmac_key):
 
 def start_client():
     host = input("Enter server IP address: ")
-    port = 12345
+    port = 9999
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((host, port))
@@ -186,6 +159,7 @@ def send_messages(client_socket, key, hmac_key):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_message(message, hmac, timestamp)
+        log_encrypted_message(encrypted_message)
 
         if message.lower() == "exit":
             break
