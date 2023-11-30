@@ -141,18 +141,19 @@ def start_server():
 def server_send_messages(conn, key, hmac_key):
     while True:
         message = input("")
+
         encrypted_message = encrypt_message(message, key)
         hmac = calculate_hmac(encrypted_message, hmac_key)
 
         conn.sendall(encrypted_message + hmac)
 
+        if message.lower() == "end chat":
+            break
+
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_actual_messages(timestamp, message, "server")
         log_integrity_and_message(message, hmac, timestamp, "server sends: ")
         log_encrypted_message(encrypted_message)
-
-        if message.lower() == "end chat":
-            break
 
 
 def server_recieve_messages(conn, key, hmac_key):
@@ -261,13 +262,13 @@ def client_send_messages(client_socket, key, hmac_key):
         hmac = calculate_hmac(encrypted_message, hmac_key)
         client_socket.sendall(encrypted_message + hmac)
 
+        if message.lower() == "end chat":
+            break
+
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_actual_messages(timestamp, message, "client")
         log_integrity_and_message(message, hmac, timestamp, "client sends: ")
         log_encrypted_message(encrypted_message)
-
-        if message.lower() == "end chat":
-            break
 
 
 def main():
